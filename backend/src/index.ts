@@ -1,18 +1,85 @@
-import {WebSocketServer} from 'ws';
+import { WebSocketServer } from 'ws';
+import type { ClientMessage, ServerMessage } from './types/websocket';
+import connectDB from './db/connector';
+import { createWorkspace, getAllWorkspace } from './services/workspace.service';
+import { configDotenv } from 'dotenv';
 
-const ws=new WebSocketServer({port: 3000});
+configDotenv();
 
-console.log("Websocket server running on port 3000");
+async function startServer() {
+    try {
+        await connectDB();
+        console.log("Server starting...");
 
-ws.on("connection",(socket)=>{
-    console.log("client connected");
-    socket.on("message", (message)=>{
-        console.log("Received: ", message.toString());
-        socket.send("hello");
-    });
+        const wss = new WebSocketServer({
+            port: 3000,
+        });
 
-    socket.on("close", ()=>{
-        console.log("client disconnected");
-    })
+        console.log("WebSocket server running on port 3000");
 
-});
+        wss.on("connection", (socket) => {
+            console.log("Client connected");
+
+            socket.on("message", async (rawMessage) => {
+                try {
+                    const message: ClientMessage = JSON.parse(rawMessage.toString());
+
+                    switch (message.type) {
+                        case "create_workspace": {
+                            const workspace =
+                                await createWorkspace(
+                                    message.workspaceDetails
+                                );
+
+                            const response: ServerMessage = {
+                                type: "workspace_created",
+                                workspace,
+                            };
+
+                            socket.send(
+                                JSON.stringify(response)
+                            );
+
+                            break;
+                        }
+
+                        case "get_workspaces": {
+                            const workspaces = await getAllWorkspace();
+
+                            const response: ServerMessage = {
+                                type: "workspaces",
+                                workspaces,
+                            };
+
+                            socket.send(
+                                JSON.stringify(response)
+                            );
+
+                            break;
+                        }
+                    }
+                } catch (error) {
+                    console.error("WebSocket message error:", error);
+
+                    const response: ServerMessage = {
+                        type: "error",
+                        message: "Something went wrong",
+                    };
+
+                    socket.send(JSON.stringify(response));
+                }
+            });
+
+            socket.on("close", () => {
+                console.log("Client disconnected");
+            });
+        });
+    } catch (error) {
+        console.error(error);
+        process.exit(1);
+    }
+}
+
+startServer();
+
+
