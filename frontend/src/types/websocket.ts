@@ -7,7 +7,12 @@ export type ClientMessage =
     }
   | {
       type: "get_workspaces";
-    };
+    }
+  | {
+    type: "chat_message";
+    workspaceId: string;
+    message: string;
+  };
 
 export type ServerMessage =
   | {

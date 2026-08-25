@@ -40,22 +40,23 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen w-full">
+    <div className="flex  flex-col h-screen overflow-hidden">
 
       <div className="flex justify-center bg-zinc-200 p-2">
         <h1>AI Factory</h1>
       </div>
 
-      <div className="bg-zinc-100 px-2 py-1 text-sm">WebSocket: {status}</div>
+            <div className="shrink-0 bg-zinc-100 px-2 py-1 text-sm">
+WebSocket: {status}</div>
 
-      <div className="flex min-h-screen flex-row border-2 border-gray-400 bg-zinc-800">
+      <div className="flex min-h-0 flex-1 flex-row border-2 border-gray-400 bg-zinc-800">
         <WorkspaceSidebar
           workspaces={workspaces}
           selectedWorkspace={selectedWorkspace}
           setSelectedWorkspace={setSelectedWorkspace}
           sendMessage={sendMessage}
         />
-        <WorkspaceView selectedWorkspace={selectedWorkspace} />
+        <WorkspaceView selectedWorkspace={selectedWorkspace} sendMessage={sendMessage} />
       </div>
       
     </div>

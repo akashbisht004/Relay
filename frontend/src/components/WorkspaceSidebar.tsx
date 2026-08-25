@@ -18,10 +18,11 @@ function WorkspaceSidebar({
 }: WorkspaceSidebarProps) {
     
   const [newWorkspace, setNewWorkspace] = useState(false);
-  return (
-    <div className="min-h-screen w-1/4 min-w-40 max-w-3xs rounded-xl border-2 border-zinc-800 bg-zinc-200 p-2">
 
-      <div className="flex flex-row justify-between border p-1">
+  return (
+    <div className="flex w-1/4 min-w-40 max-w-3xs shrink-0 flex-col overflow-hidden rounded-xl border-2 border-zinc-800 bg-zinc-200 p-2">
+
+      <div className="flex shrink-0 flex-row justify-between border p-1">
         <div>Workspaces</div>
 
         <button
@@ -35,13 +36,15 @@ function WorkspaceSidebar({
       </div>
 
       {newWorkspace && (
-        <WorkspaceForm
-          setNewWorkspace={setNewWorkspace}
-          sendMessage={sendMessage}
-        />
+        <div className="shrink-0">
+          <WorkspaceForm
+            setNewWorkspace={setNewWorkspace}
+            sendMessage={sendMessage}
+          />
+        </div>
       )}
 
-      <div className="mt-2 h-3/4 border border-gray-600 p-5">
+      <div className="mt-2 min-h-0 flex-1 overflow-y-auto border border-gray-600 p-5">
         {workspaces.length === 0 ? (
           <div className="flex h-full items-center justify-center text-center">
             Add new workspace
@@ -53,7 +56,9 @@ function WorkspaceSidebar({
                 type="button"
                 key={workspace.id}
                 className={`cursor-pointer border border-gray-500 p-1 text-center ${
-                  selectedWorkspace?.id === workspace.id ? "bg-gray-400" : ""
+                  selectedWorkspace?.id === workspace.id
+                    ? "bg-gray-400"
+                    : ""
                 }`}
                 onClick={() => setSelectedWorkspace(workspace)}
               >

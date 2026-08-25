@@ -57,6 +57,10 @@ async function startServer() {
 
                             break;
                         }
+
+                        case "chat_message": {
+                            const workspace=
+                        }
                     }
                 } catch (error) {
                     console.error("WebSocket message error:", error);
