@@ -60,7 +60,9 @@ function WorkspaceSidebar({
                     ? "bg-gray-400"
                     : ""
                 }`}
-                onClick={() => setSelectedWorkspace(workspace)}
+                onClick={() => {
+                  setSelectedWorkspace(workspace); 
+                }}
               >
                 {workspace.name}
               </button>

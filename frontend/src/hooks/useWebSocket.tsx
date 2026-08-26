@@ -20,6 +20,7 @@ export function useWebSocket() {
     }
 
     socket.send(JSON.stringify(message));
+    console.log("hook working fine")
   };
 
   useEffect(() => {

@@ -35,12 +35,12 @@ const workspaceSchema = new Schema({
     type: Date,
     default: Date.now,
   },
-  conversations: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: "Conversation",
-    },
-  ],
+  conversationId:
+  {
+    type: Schema.Types.ObjectId,
+    ref: "Conversation",
+    required: true
+  },
 });
 
 export const ConversationModel = model("Conversation", conversationSchema);

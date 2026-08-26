@@ -7,7 +7,7 @@ export type Workspace = {
   id: string;
   name: string;
   path: string;
-  conversations: string[];
+  conversationId: string;
 };
 
 export type Conversation = {
@@ -16,9 +16,8 @@ export type Conversation = {
 };
 
 export type Message = {
-  id: string;
   role: "user" | "assistant";
   content: string;
-  createdAt: string;
+  createdAt: Date;
 };
 

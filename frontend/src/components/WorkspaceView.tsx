@@ -1,3 +1,4 @@
+import type { Conversation } from "../types/conversation";
 import type { ClientMessage } from "../types/websocket";
 import type { Workspace } from "../types/workspace";
 import ChatInput from "./ChatInput";
@@ -5,37 +6,74 @@ import ChatInput from "./ChatInput";
 function WorkspaceView({
   selectedWorkspace,
   sendMessage,
+  conversation,
 }: {
   selectedWorkspace: Workspace | null;
   sendMessage: (message: ClientMessage) => void;
+  conversation: Conversation | null;
 }) {
-   return (
+  return (
     <div className="flex min-w-0 flex-1 flex-col rounded-xl border-2 border-zinc-800 bg-zinc-200">
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-4">
-        {selectedWorkspace ? (
-          <div>
-            <h2 className="text-xl font-bold">
-              {selectedWorkspace.name}
-            </h2>
+      {selectedWorkspace && (
+        <div className="shrink-0 border-b border-zinc-300 px-5 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-5">
+              <h2 className="text-xl font-bold">
+                {selectedWorkspace.name}
+              </h2>
 
-            <p className="mt-2 text-sm text-gray-600">
-              Path: {selectedWorkspace.path}
-            </p>
+              <p className="text-sm text-gray-600">
+                Path: {selectedWorkspace.path}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
-            <p className="mt-2 text-sm text-gray-600">
-              Conversations: {selectedWorkspace.conversations.length}
-            </p>
+      <div className="min-h-0 flex-1 overflow-y-auto p-6">
+        {!selectedWorkspace ? (
+          <div className="flex h-full items-center justify-center text-gray-500">
+            Select a workspace
+          </div>
+        ) : !conversation || conversation.messages.length === 0 ? (
+          <div className="flex h-full items-center justify-center text-gray-500">
+            Start a conversation...
           </div>
         ) : (
-          <div className="flex h-full items-center justify-center">
-            Select a workspace
+          <div className="mx-auto flex max-w-4xl flex-col gap-5">
+            {conversation.messages.map((message, index) => {
+              const isUser = message.role === "user";
+
+              return (
+                <div
+                  key={index}
+                  className={`flex ${
+                    isUser ? "justify-end" : "justify-start"
+                  }`}
+                >
+                  <div
+                    className={`max-w-[75%] rounded-2xl px-4 py-3 ${
+                      isUser
+                        ? "rounded-br-md bg-zinc-800 text-white"
+                        : "rounded-bl-md bg-white text-zinc-900 shadow-sm"
+                    }`}
+                  >
+                    <p className="whitespace-pre-wrap text-sm leading-6">
+                      {message.content}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
 
-      <ChatInput sendMessage={sendMessage} selectedWorkspace={selectedWorkspace} />
-
+      <ChatInput
+        sendMessage={sendMessage}
+        selectedWorkspace={selectedWorkspace}
+      />
     </div>
   );
 }

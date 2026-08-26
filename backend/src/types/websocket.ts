@@ -1,4 +1,4 @@
-import type { CreateWorkspace, Workspace } from "./workspace";
+import type { Conversation, CreateWorkspace, Workspace } from "./workspace";
 
 export type ClientMessage =
   | {
@@ -11,7 +11,12 @@ export type ClientMessage =
   | {
     type: "chat_message";
     workspaceId: string;
+    conversationId: string;
     message: string;
+  }
+  | {
+    type: "get_conversation";
+    conversationId: string;
   };
 
 export type ServerMessage =
@@ -26,4 +31,8 @@ export type ServerMessage =
   | {
     type: "error";
     message: string;
+  }
+  | {
+    type: "conversation";
+    conversation: Conversation;
   };

@@ -1,7 +1,7 @@
 import { WebSocketServer } from 'ws';
 import type { ClientMessage, ServerMessage } from './types/websocket';
 import connectDB from './db/connector';
-import { createWorkspace, getAllWorkspace } from './services/workspace.service';
+import { handleChatMessage, createWorkspace, getAllWorkspace, getConversation } from './services/workspace.service';
 import { configDotenv } from 'dotenv';
 
 configDotenv();
@@ -23,23 +23,18 @@ async function startServer() {
             socket.on("message", async (rawMessage) => {
                 try {
                     const message: ClientMessage = JSON.parse(rawMessage.toString());
+                    console.log("got msg of type: ",message.type )
 
                     switch (message.type) {
                         case "create_workspace": {
-                            const workspace =
-                                await createWorkspace(
-                                    message.workspaceDetails
-                                );
+                            const workspace = await createWorkspace(message.workspaceDetails);
 
                             const response: ServerMessage = {
                                 type: "workspace_created",
                                 workspace,
                             };
 
-                            socket.send(
-                                JSON.stringify(response)
-                            );
-
+                            socket.send(JSON.stringify(response));
                             break;
                         }
 
@@ -51,16 +46,28 @@ async function startServer() {
                                 workspaces,
                             };
 
-                            socket.send(
-                                JSON.stringify(response)
-                            );
-
+                            socket.send(JSON.stringify(response));
                             break;
                         }
 
                         case "chat_message": {
-                            const workspace=
+                            const workspaceId = message.workspaceId;
+                            const userMessage = message.message;
+                            await handleChatMessage(workspaceId, userMessage);
+                            break;
                         }
+
+                        case "get_conversation": {
+                            const conversationId=message.conversationId;
+                            const conversation=await getConversation(conversationId)
+                            const response: ServerMessage={
+                                type: "conversation",
+                                conversation
+                            }
+                            socket.send(JSON.stringify(response));
+                            break;
+                        }
+
                     }
                 } catch (error) {
                     console.error("WebSocket message error:", error);

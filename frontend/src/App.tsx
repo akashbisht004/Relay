@@ -4,11 +4,15 @@ import type { ClientMessage } from "./types/websocket";
 import WorkspaceSidebar from "./components/WorkspaceSidebar";
 import WorkspaceView from "./components/WorkspaceView";
 import { useWebSocket } from "./hooks/useWebSocket";
+import type { Conversation } from "./types/conversation";
 
 function App() {
   const { status, lastMessage, sendMessage } = useWebSocket();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  const [selectedWorkspace, setSelectedWorkspace] = useState<Workspace | null>(null);
+  const [selectedWorkspace, setSelectedWorkspace] = useState<Workspace | null>(
+    null,
+  );
+  const [conversation, setConversation] = useState<Conversation | null>(null);
 
   useEffect(() => {
     if (!lastMessage) return;
@@ -27,10 +31,25 @@ function App() {
         console.error("Server error:", lastMessage.message);
         break;
 
+      case "conversation":
+        setConversation(lastMessage.conversation);
+        break;
+
       default:
         console.log("Unknown server message");
     }
   }, [lastMessage]);
+
+  useEffect(()=>{
+    if(!selectedWorkspace){
+      setConversation(null);
+      return;
+    }
+    sendMessage({
+      type:"get_conversation",
+      conversationId: selectedWorkspace.conversationId
+    });
+  }, [selectedWorkspace]);
 
   const getAllWorkspaces = () => {
     const message: ClientMessage = {
@@ -41,13 +60,13 @@ function App() {
 
   return (
     <div className="flex  flex-col h-screen overflow-hidden">
-
       <div className="flex justify-center bg-zinc-200 p-2">
         <h1>AI Factory</h1>
       </div>
 
-            <div className="shrink-0 bg-zinc-100 px-2 py-1 text-sm">
-WebSocket: {status}</div>
+      <div className="shrink-0 bg-zinc-100 px-2 py-1 text-sm">
+        WebSocket: {status}
+      </div>
 
       <div className="flex min-h-0 flex-1 flex-row border-2 border-gray-400 bg-zinc-800">
         <WorkspaceSidebar
@@ -56,9 +75,12 @@ WebSocket: {status}</div>
           setSelectedWorkspace={setSelectedWorkspace}
           sendMessage={sendMessage}
         />
-        <WorkspaceView selectedWorkspace={selectedWorkspace} sendMessage={sendMessage} />
+        <WorkspaceView
+          selectedWorkspace={selectedWorkspace}
+          conversation={conversation}
+          sendMessage={sendMessage}
+        />
       </div>
-      
     </div>
   );
 }
