@@ -1,25 +1,38 @@
-import { readdir, readFile } from "node:fs/promises";
+import {
+    readdir,
+    readFile,
+} from "node:fs/promises";
+
 import path from "node:path";
 
 import type { Tool } from "./types";
+import { resolveWorkspacePath } from "../workspace";
+import type { ToolResult } from "../types";
 
 async function searchDirectory(
     directory: string,
     searchText: string,
-    results: {
-        path: string;
-        line: number;
-        content: string;
-    }[],
-) {
-    const entries = await readdir(directory, {
-        withFileTypes: true,
-    });
+    results: string[],
+    workspacePath: string
+): Promise<void> {
+
+    const entries = await readdir(
+        directory,
+        {
+            withFileTypes: true,
+        }
+    );
 
     for (const entry of entries) {
-        const fullPath = path.join(directory, entry.name);
+
+        const fullPath = path.join(
+            directory,
+            entry.name
+        );
 
         if (entry.isDirectory()) {
+
+            // Don't search dependencies/build output
             if (
                 entry.name === "node_modules" ||
                 entry.name === ".git" ||
@@ -28,60 +41,121 @@ async function searchDirectory(
                 continue;
             }
 
-            await searchDirectory(fullPath, searchText, results);
+            await searchDirectory(
+                fullPath,
+                searchText,
+                results,
+                workspacePath
+            );
+
             continue;
         }
 
         try {
-            const content = await readFile(fullPath, "utf8");
-            const lines = content.split("\n");
 
-            lines.forEach((line, index) => {
-                if (line.includes(searchText)) {
-                    results.push({
-                        path: fullPath,
-                        line: index + 1,
-                        content: line.trim(),
-                    });
-                }
-            });
+            const content = await readFile(
+                fullPath,
+                "utf-8"
+            );
+
+            if (content.includes(searchText)) {
+
+                results.push(
+                    path.relative(
+                        workspacePath,
+                        fullPath
+                    )
+                );
+            }
+
         } catch {
-            
+            // Ignore files that cannot be read as text
         }
     }
 }
 
 export const searchFilesTool: Tool = {
+
     name: "search_files",
-    description: "Searches files recursively for a piece of text",
 
-    execute: async ({
-        path: directory,
-        searchText,
-    }: {
-        path: string;
-        searchText: string;
-    }) => {
+    description:
+        "Searches files inside the workspace for a text string.",
+
+    parameters: {
+        type: "object",
+
+        properties: {
+
+            query: {
+                type: "string",
+                description:
+                    "Text to search for.",
+            },
+
+            path: {
+                type: "string",
+                description:
+                    "Directory to search from. Use '.' for the workspace root.",
+            },
+        },
+
+        required: [
+            "query",
+            "path",
+        ],
+    },
+
+    execute: async (
+        args,
+        toolCallId,
+        workspacePath
+    ): Promise<ToolResult> => {
+
+        if (
+            typeof args.query !== "string" ||
+            typeof args.path !== "string"
+        ) {
+            return {
+                success: false,
+                toolCallId,
+                tool: "search_files",
+                error:
+                    "query and path must be strings",
+            };
+        }
+
         try {
-            const results: {
-                path: string;
-                line: number;
-                content: string;
-            }[] = [];
 
-            await searchDirectory(directory, searchText, results);
+            const searchPath = resolveWorkspacePath(
+                workspacePath,
+                args.path
+            );
+
+            const results: string[] = [];
+
+            await searchDirectory(
+                searchPath,
+                args.query,
+                results,
+                workspacePath
+            );
 
             return {
                 success: true,
-                path: directory,
-                searchText,
-                results,
+                toolCallId,
+                tool: "search_files",
+                data: results,
             };
+
         } catch (error) {
+
             return {
                 success: false,
-                path: directory,
-                error: String(error),
+                toolCallId,
+                tool: "search_files",
+                error: error instanceof Error
+                    ? error.message
+                    : "Failed to search files",
             };
         }
     },

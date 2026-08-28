@@ -1,56 +1,70 @@
+import "dotenv/config";
+
 import tools from "./tools";
-import type { AgentMessage } from "./types";
-import { demo } from "./model/demo";
+import { getToolDefinitions } from "./tools";
+import { geminiModel } from "./model/gemini";
 
-const context: AgentMessage[] = [];
-context.push({
-    role: "user",
-    content: "Inspect the project and read package.json",
-});
+console.log(
+    "KEY:",
+    process.env.GEMINI_API_KEY ? "FOUND" : "MISSING"
+);
 
-async function runAgent() {
+async function runAgent(
+    userPrompt: string,
+    workspacePath: string
+) {
     let done = false;
 
-    while (!done) {
-        const decision = await demo.generate(context);
+    const toolDefinitions = getToolDefinitions();
 
-        console.log("DECISION:", decision);
+    let decision = await geminiModel.generate(
+        userPrompt,
+        toolDefinitions
+    );
+
+    while (!done) {
+
+        console.log("\nMODEL DECISION:");
+        console.log(decision);
+
         if (decision.type === "tool_call") {
+
             const tool = tools.get(decision.tool);
 
             if (!tool) {
-                const error = {
-                    success: false,
-                    error: `Tool "${decision.tool}" not found`,
-                };
-                context.push({
-                    role: "tool",
-                    tool: decision.tool,
-                    content: error,
-                });
-                continue;
+                throw new Error(
+                    `Tool "${decision.tool}" not found`
+                );
             }
 
-            context.push({
-                role: "assistant",
-                tool: decision.tool,
-                args: decision.args,
-            });
+            const result = await tool.execute(
+                decision.args,
+                decision.toolCallId,
+                workspacePath
+            );
 
-            const result = await tool.execute(decision.args);
-            console.log("TOOL RESULT:", result);
+            console.log("\nTOOL RESULT:");
+            console.log(result);
 
-            context.push({
-                role: "tool",
-                tool: decision.tool,
-                content: result,
-            });
+            decision = await geminiModel.continue(
+                result,
+                toolDefinitions
+            );
+
+            continue;
         }
 
         if (decision.type === "final") {
-            console.log("FINAL:", decision.content);
+
+            console.log("\nFINAL RESPONSE:");
+            console.log(decision.content);
+
             done = true;
         }
     }
 }
-void runAgent();
+
+void runAgent(
+    "Read package.json and tell me what dependencies this project has.",
+    "."
+);

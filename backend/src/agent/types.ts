@@ -1,14 +1,3 @@
-export type Decision =
-    | {
-        type: "tool_call";
-        tool: string;
-        args: Record<string, unknown>;
-    }
-    | {
-        type: "final";
-        content: string;
-    };
-
 export type AgentMessage =
     | {
         role: "system";
@@ -24,11 +13,33 @@ export type AgentMessage =
     }
     | {
         role: "assistant";
+        toolCallId: string;
         tool: string;
         args: Record<string, unknown>;
     }
     | {
         role: "tool";
+        toolCallId: string;
         tool: string;
         content: unknown;
     };
+
+export type Decision =
+    | {
+        type: "tool_call";
+        toolCallId: string;
+        tool: string;
+        args: Record<string, unknown>;
+    }
+    | {
+        type: "final";
+        content: string;
+    };
+
+export type ToolResult = {
+    success: boolean;
+    toolCallId: string;
+    tool: string;
+    data?: unknown;
+    error?: string;
+};

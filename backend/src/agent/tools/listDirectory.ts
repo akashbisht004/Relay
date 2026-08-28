@@ -1,32 +1,83 @@
 import { readdir } from "node:fs/promises";
 
 import type { Tool } from "./types";
+import { resolveWorkspacePath } from "../workspace";
+import type { ToolResult } from "../types";
 
 export const listDirectoryTool: Tool = {
+
     name: "list_directory",
-    description: "Lists files and directories inside a directory",
 
-    execute: async ({ path }: { path: string }) => {
+    description:
+        "Lists files and directories inside a workspace directory.",
+
+    parameters: {
+        type: "object",
+
+        properties: {
+
+            path: {
+                type: "string",
+                description:
+                    "Relative directory path. Use '.' for workspace root.",
+            },
+        },
+
+        required: ["path"],
+    },
+
+    execute: async (
+        args,
+        toolCallId,
+        workspacePath
+    ): Promise<ToolResult> => {
+
+        if (typeof args.path !== "string") {
+            return {
+                success: false,
+                toolCallId,
+                tool: "list_directory",
+                error: "path must be a string",
+            };
+        }
+
         try {
-            const entries = await readdir(path, {
-                withFileTypes: true,
-            });
 
-            const files = entries.map((entry) => ({
+            const directoryPath = resolveWorkspacePath(
+                workspacePath,
+                args.path
+            );
+
+            const entries = await readdir(
+                directoryPath,
+                {
+                    withFileTypes: true,
+                }
+            );
+
+            const result = entries.map((entry) => ({
                 name: entry.name,
-                type: entry.isDirectory() ? "directory" : "file",
+                type: entry.isDirectory()
+                    ? "directory"
+                    : "file",
             }));
 
             return {
                 success: true,
-                path,
-                entries: files,
+                toolCallId,
+                tool: "list_directory",
+                data: result,
             };
+
         } catch (error) {
+
             return {
                 success: false,
-                path,
-                error: String(error),
+                toolCallId,
+                tool: "list_directory",
+                error: error instanceof Error
+                    ? error.message
+                    : "Failed to list directory",
             };
         }
     },
