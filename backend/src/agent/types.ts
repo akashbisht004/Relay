@@ -43,3 +43,19 @@ export type ToolResult = {
     data?: unknown;
     error?: string;
 };
+
+export type AgentEvent =
+    | {
+        type: "tool_start";
+        tool: string;
+        toolCallId: string;
+        args: Record<string, unknown>;
+    }
+    | {
+        type: "tool_result";
+        result: ToolResult;
+    }
+    | {
+        type: "final";
+        content: string;
+    };

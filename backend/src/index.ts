@@ -19,11 +19,11 @@ async function startServer() {
 
         wss.on("connection", (socket) => {
             console.log("Client connected");
-
+            
             socket.on("message", async (rawMessage) => {
                 try {
                     const message: ClientMessage = JSON.parse(rawMessage.toString());
-                    console.log("got msg of type: ",message.type )
+                    console.log("got msg of type: ", message.type)
 
                     switch (message.type) {
                         case "create_workspace": {
@@ -51,16 +51,21 @@ async function startServer() {
                         }
 
                         case "chat_message": {
-                            const workspaceId = message.workspaceId;
-                            const userMessage = message.message;
-                            await handleChatMessage(workspaceId, userMessage);
+                            await handleChatMessage(
+                                message.workspaceId,
+                                message.message,
+                                (event) => {
+                                    socket.send(JSON.stringify(event));
+                                }
+                            );
+
                             break;
                         }
 
                         case "get_conversation": {
-                            const conversationId=message.conversationId;
-                            const conversation=await getConversation(conversationId)
-                            const response: ServerMessage={
+                            const conversationId = message.conversationId;
+                            const conversation = await getConversation(conversationId)
+                            const response: ServerMessage = {
                                 type: "conversation",
                                 conversation
                             }

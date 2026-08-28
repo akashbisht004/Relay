@@ -1,15 +1,17 @@
 import { ConversationModel, WorkspaceModel } from "../db/model";
 import type { CreateWorkspace, Workspace, Message, Conversation } from "../types/workspace";
+import { runAgent } from "../agent/agent";
+import { ServerMessage } from "../types/websocket";
 
 export async function createWorkspace(data: CreateWorkspace): Promise<Workspace> {
-    const conversation= await ConversationModel.create({messages:[]})
+    const conversation = await ConversationModel.create({ messages: [] })
 
     const workspace = await WorkspaceModel.create({
         name: data.name,
         path: data.path,
         conversationId: conversation._id
     })
-    
+
     return {
         id: workspace.id,
         name: workspace.name,
@@ -29,16 +31,19 @@ export async function getAllWorkspace(): Promise<Workspace[]> {
     }));
 }
 
-export async function getConversation(conversationId: string): Promise<Conversation>{
-    const conversation=await ConversationModel.findById(conversationId);
-    if(!conversation) throw new Error("Conversation not found");
+export async function getConversation(conversationId: string): Promise<Conversation> {
+    const conversation = await ConversationModel.findById(conversationId);
+    if (!conversation) throw new Error("Conversation not found");
     return conversation;
 }
 
-export async function handleChatMessage(workspaceId: string, userMessage: string) {
+export async function handleChatMessage(workspaceId: string, userMessage: string, send: (message: ServerMessage) => void) {
     const workspace = await WorkspaceModel.findById(workspaceId);
-    const conversation = await ConversationModel.findById(workspace?.conversationId);
+    if (!workspace) {
+        throw new Error("Workspace not found");
+    }
 
+    const conversation = await ConversationModel.findById(workspace.conversationId);
     if (!conversation) {
         throw new Error("Conversation not found");
     }
@@ -51,5 +56,43 @@ export async function handleChatMessage(workspaceId: string, userMessage: string
     conversation.messages.push(message);
     await conversation.save();
 
-    // ai fuction calling agent
+    await runAgent(userMessage, workspace.path,
+        (event) => {
+            if (event.type === "tool_start") {
+                send({
+                    type: "agent_tool_start",
+                    tool: event.tool,
+                    toolCallId: event.toolCallId,
+                    args: event.args,
+                });
+                return;
+            }
+
+            if (event.type === "tool_result") {
+                send({
+                    type: "agent_tool_result",
+                    tool: event.result.tool,
+                    toolCallId: event.result.toolCallId,
+                    success: event.result.success,
+                    data: event.result.data,
+                    error: event.result.error,
+                });
+                return;
+            }
+
+            if (event.type === "final") {
+                send({
+                    type: "agent_final",
+                    content: event.content,
+                });
+                conversation.messages.push({
+                    role: "assistant",
+                    content: event.content,
+                    createdAt: new Date(),
+                });
+                return;
+            }
+        }
+    );
+    await conversation.save();
 }

@@ -3,39 +3,33 @@ import "dotenv/config";
 import tools from "./tools";
 import { getToolDefinitions } from "./tools";
 import { geminiModel } from "./model/gemini";
+import { AgentEvent } from "./types";
 
-console.log(
-    "KEY:",
-    process.env.GEMINI_API_KEY ? "FOUND" : "MISSING"
-);
-
-async function runAgent(
+export async function runAgent(
     userPrompt: string,
-    workspacePath: string
-) {
-    let done = false;
+    workspacePath: string,
+    onEvent?: (event: AgentEvent) => void
+): Promise<void> {
 
     const toolDefinitions = getToolDefinitions();
+    let decision = await geminiModel.generate(userPrompt, toolDefinitions);
 
-    let decision = await geminiModel.generate(
-        userPrompt,
-        toolDefinitions
-    );
-
-    while (!done) {
-
-        console.log("\nMODEL DECISION:");
-        console.log(decision);
+    while (true) {
 
         if (decision.type === "tool_call") {
 
             const tool = tools.get(decision.tool);
-
             if (!tool) {
-                throw new Error(
-                    `Tool "${decision.tool}" not found`
-                );
+                throw new Error(`Tool "${decision.tool}" not found`);
             }
+
+            // socket event
+            onEvent?.({
+                type: "tool_start",
+                tool: decision.tool,
+                toolCallId: decision.toolCallId,
+                args: decision.args,
+            });
 
             const result = await tool.execute(
                 decision.args,
@@ -43,28 +37,26 @@ async function runAgent(
                 workspacePath
             );
 
-            console.log("\nTOOL RESULT:");
-            console.log(result);
+            // scoket
+            onEvent?.({
+                type: "tool_result",
+                result,
+            });
 
             decision = await geminiModel.continue(
                 result,
                 toolDefinitions
             );
-
             continue;
         }
 
         if (decision.type === "final") {
-
-            console.log("\nFINAL RESPONSE:");
-            console.log(decision.content);
-
-            done = true;
+            // socket event
+            onEvent?.({
+                type: "final",
+                content: decision.content,
+            });
+            return;
         }
     }
 }
-
-void runAgent(
-    "Read package.json and tell me what dependencies this project has.",
-    "."
-);
