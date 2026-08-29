@@ -1,24 +1,18 @@
 import { useState } from "react";
-import type { ClientMessage } from "../types/websocket";
-import type { Workspace } from "../types/workspace";
 
 type ChatInputProps = {
-  sendMessage: (message: ClientMessage) => void;
-  selectedWorkspace: Workspace | null;
+  onSend: (message: string) => void;
 };
 
-function ChatInput({ sendMessage, selectedWorkspace }: ChatInputProps) {
+function ChatInput({ onSend }: ChatInputProps) {
   const [message, setMessage] = useState("");
 
   const handleSend = () => {
     const trimmedMessage = message.trim();
 
     if (!trimmedMessage) return;
-    sendMessage({
-      type: "chat_message",
-      workspaceId: selectedWorkspace!.id,
-      message,
-    });
+
+    onSend(trimmedMessage);
     setMessage("");
   };
 

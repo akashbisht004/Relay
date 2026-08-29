@@ -29,10 +29,28 @@ export type ServerMessage =
     workspaces: Workspace[];
   }
   | {
-    type: "error";
-    message: string;
-  }
-  | {
     type: "conversation";
     conversation: Conversation;
+  }
+  | {
+    type: "agent_tool_start";
+    tool: string;
+    toolCallId: string;
+    args: Record<string, unknown>;
+  }
+  | {
+    type: "agent_tool_result";
+    tool: string;
+    toolCallId: string;
+    success: boolean;
+    data?: unknown;
+    error?: string;
+  }
+  | {
+    type: "agent_final";
+    content: string;
+  }
+  | {
+    type: "error";
+    message: string;
   };

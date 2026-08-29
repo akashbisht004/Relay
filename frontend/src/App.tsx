@@ -1,86 +1,71 @@
-import { useEffect, useState } from "react";
-import type { Workspace } from "./types/workspace";
-import type { ClientMessage } from "./types/websocket";
+import { useAgent } from "./hooks/useAgent";
+import { useWebSocket } from "./hooks/useWebSocket";
+import { useWorkspace } from "./hooks/useWorkspace";
+
 import WorkspaceSidebar from "./components/WorkspaceSidebar";
 import WorkspaceView from "./components/WorkspaceView";
-import { useWebSocket } from "./hooks/useWebSocket";
-import type { Conversation } from "./types/conversation";
 
 function App() {
   const { status, lastMessage, sendMessage } = useWebSocket();
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  const [selectedWorkspace, setSelectedWorkspace] = useState<Workspace | null>(
-    null,
-  );
-  const [conversation, setConversation] = useState<Conversation | null>(null);
 
-  useEffect(() => {
-    if (!lastMessage) return;
+  const {
+    conversation,
+    setConversation,
+    agentEvents,
+    addUserMessage,
+    clearAgentEvents,
+  } = useAgent(lastMessage);
 
-    switch (lastMessage.type) {
-      case "workspaces":
-        setWorkspaces(lastMessage.workspaces);
-        break;
+  const {
+    workspaces,
+    selectedWorkspace,
+    setSelectedWorkspace,
+  } = useWorkspace({
+    lastMessage,
+    sendMessage,
+    clearAgentEvents,
+    setConversation,
+  });
 
-      case "workspace_created":
-        setWorkspaces((prev) => [...prev, lastMessage.workspace]);
-        setSelectedWorkspace(lastMessage.workspace);
-        break;
+  const handleSendMessage = (message: string) => {
+    if (!selectedWorkspace) return;
 
-      case "error":
-        console.error("Server error:", lastMessage.message);
-        break;
+    addUserMessage(message);
+    clearAgentEvents();
 
-      case "conversation":
-        setConversation(lastMessage.conversation);
-        break;
-
-      default:
-        console.log("Unknown server message");
-    }
-  }, [lastMessage]);
-
-  useEffect(()=>{
-    if(!selectedWorkspace){
-      setConversation(null);
-      return;
-    }
     sendMessage({
-      type:"get_conversation",
-      conversationId: selectedWorkspace.conversationId
+      type: "chat_message",
+      workspaceId: selectedWorkspace.id,
+      message,
     });
-  }, [selectedWorkspace]);
-
-  const getAllWorkspaces = () => {
-    const message: ClientMessage = {
-      type: "get_workspaces",
-    };
-    sendMessage(message);
   };
 
   return (
-    <div className="flex  flex-col h-screen overflow-hidden">
-      <div className="flex justify-center bg-zinc-200 p-2">
-        <h1>AI Factory</h1>
-      </div>
+    <div className="flex h-screen flex-col overflow-hidden">
 
-      <div className="shrink-0 bg-zinc-100 px-2 py-1 text-sm">
+      <header className="flex shrink-0 items-center justify-center border-b border-zinc-300 bg-zinc-200 px-4 py-3">
+        <h1 className="font-semibold">AI Factory</h1>
+      </header>
+
+      <div className="shrink-0 bg-zinc-100 px-3 py-1 text-xs text-zinc-500">
         WebSocket: {status}
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-row border-2 border-gray-400 bg-zinc-800">
+      <main className="flex min-h-0 flex-1 overflow-hidden bg-zinc-800">
         <WorkspaceSidebar
           workspaces={workspaces}
           selectedWorkspace={selectedWorkspace}
           setSelectedWorkspace={setSelectedWorkspace}
           sendMessage={sendMessage}
         />
+
         <WorkspaceView
           selectedWorkspace={selectedWorkspace}
           conversation={conversation}
-          sendMessage={sendMessage}
+          onSendMessage={handleSendMessage}
+          agentEvents={agentEvents}
         />
-      </div>
+      </main>
     </div>
   );
 }

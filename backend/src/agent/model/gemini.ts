@@ -26,21 +26,17 @@ async function callGemini(
 ): Promise<Decision> {
 
     const response = await ai.models.generateContent({
-        model: "gemini-3.6-flash",
+        model: "gemini-3.5-flash",
 
         contents,
 
         config: {
             systemInstruction: `
-You are an AI coding agent.
-
-You can inspect and modify software projects using the available tools.
-
-Use tools whenever necessary to complete the user's task.
-
-When the task is complete, provide a final response.
-`,
-
+                You are an AI coding agent.
+                You can inspect and modify software projects using the available tools.
+                Use tools whenever necessary to complete the user's task.
+                When the task is complete, provide a final response.
+                `,
             tools: [
                 {
                     functionDeclarations: toGeminiTools(tools),
@@ -55,8 +51,6 @@ When the task is complete, provide a final response.
         throw new Error("Gemini returned no content");
     }
 
-    // IMPORTANT:
-    // Keep Gemini's exact response in history.
     contents.push(modelContent);
 
     const functionCall = response.functionCalls?.[0];
