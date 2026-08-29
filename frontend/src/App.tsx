@@ -6,7 +6,7 @@ import WorkspaceSidebar from "./components/WorkspaceSidebar";
 import WorkspaceView from "./components/WorkspaceView";
 
 function App() {
-  const { status, lastMessage, sendMessage } = useWebSocket();
+  const { status, sendMessage, subscribe } = useWebSocket();
 
   const {
     conversation,
@@ -14,14 +14,10 @@ function App() {
     agentEvents,
     addUserMessage,
     clearAgentEvents,
-  } = useAgent(lastMessage);
+  } = useAgent(subscribe);
 
-  const {
-    workspaces,
-    selectedWorkspace,
-    setSelectedWorkspace,
-  } = useWorkspace({
-    lastMessage,
+  const { workspaces, selectedWorkspace, setSelectedWorkspace } = useWorkspace({
+    subscribe,
     sendMessage,
     clearAgentEvents,
     setConversation,
@@ -40,18 +36,26 @@ function App() {
     });
   };
 
-  return (
-    <div className="flex h-screen flex-col overflow-hidden">
+  const isConnected = status === "Connected";
 
-      <header className="flex shrink-0 items-center justify-center border-b border-zinc-300 bg-zinc-200 px-4 py-3">
-        <h1 className="font-semibold">AI Factory</h1>
+  return (
+    <div className="flex h-screen flex-col overflow-hidden bg-neutral-950 text-neutral-200">
+      <header className="flex shrink-0 items-center justify-between border-b border-neutral-800 px-5 py-3">
+        <h1 className="text-sm font-medium tracking-tight text-neutral-100">
+          AI Factory
+        </h1>
+
+        <div className="flex items-center gap-2 text-xs text-neutral-500">
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${
+              isConnected ? "bg-emerald-500" : "bg-neutral-600"
+            }`}
+          />
+          {status}
+        </div>
       </header>
 
-      <div className="shrink-0 bg-zinc-100 px-3 py-1 text-xs text-zinc-500">
-        WebSocket: {status}
-      </div>
-
-      <main className="flex min-h-0 flex-1 overflow-hidden bg-zinc-800">
+      <main className="flex min-h-0 flex-1 overflow-hidden">
         <WorkspaceSidebar
           workspaces={workspaces}
           selectedWorkspace={selectedWorkspace}

@@ -1,35 +1,37 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ClientMessage, ServerMessage } from "../types/websocket";
+
+type MessageHandler = (message: ServerMessage) => void;
 
 export function useWebSocket() {
   const socketRef = useRef<WebSocket | null>(null);
+  const handlersRef = useRef<Set<MessageHandler>>(new Set());
   const [status, setStatus] = useState("Connecting...");
-  const [lastMessage, setLastMessage] = useState<ServerMessage | null>(null);
 
-  const sendMessage = (message: ClientMessage) => {
+  const sendMessage = useCallback((message: ClientMessage) => {
     const socket = socketRef.current;
 
-    if (!socket) {
-      console.log("No socket");
-      return;
-    }
-
-    if (socket.readyState !== WebSocket.OPEN) {
-      console.log("Socket isn't open");
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+      console.warn("WebSocket is not open; dropped message:", message.type);
       return;
     }
 
     socket.send(JSON.stringify(message));
-    console.log("hook working fine")
-  };
+  }, []);
+
+  const subscribe = useCallback((handler: MessageHandler) => {
+    handlersRef.current.add(handler);
+
+    return () => {
+      handlersRef.current.delete(handler);
+    };
+  }, []);
 
   useEffect(() => {
     const socket = new WebSocket("ws://localhost:3000");
-
     socketRef.current = socket;
 
     socket.onopen = () => {
-      console.log("CONNECTED");
       setStatus("Connected");
       sendMessage({ type: "get_workspaces" });
     };
@@ -37,20 +39,17 @@ export function useWebSocket() {
     socket.onmessage = (event) => {
       try {
         const data: ServerMessage = JSON.parse(event.data);
-        console.log("RECEIVED:", data);
-        setLastMessage(data);
+        handlersRef.current.forEach((handler) => handler(data));
       } catch (error) {
         console.error("Failed to parse server message:", error);
       }
     };
 
-    socket.onerror = (error) => {
-      console.error("WEBSOCKET ERROR:", error);
+    socket.onerror = () => {
       setStatus("Error");
     };
 
     socket.onclose = () => {
-      console.log("CLOSED");
       setStatus("Disconnected");
 
       if (socketRef.current === socket) {
@@ -61,12 +60,11 @@ export function useWebSocket() {
     return () => {
       socket.close();
     };
-  }, []);
+  }, [sendMessage]);
 
   return {
-    socketRef,
     status,
-    lastMessage,
     sendMessage,
+    subscribe,
   };
 }

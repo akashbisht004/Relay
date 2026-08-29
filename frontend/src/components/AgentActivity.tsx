@@ -6,15 +6,15 @@ function AgentActivity({ events }: { events: AgentEvent[] }) {
   }
 
   return (
-    <div className="mb-4 space-y-2">
+    <div className="space-y-1.5">
       {events.map((event, index) => {
         if (event.type === "tool_start") {
           return (
             <div
               key={`${event.toolCallId}-${index}`}
-              className="text-sm text-zinc-600"
+              className="flex items-center gap-2 text-sm text-neutral-400"
             >
-              <span className="mr-2">⟳</span>
+              <span className="text-neutral-500">⟳</span>
               {getToolMessage(event.tool)}
             </div>
           );
@@ -23,9 +23,11 @@ function AgentActivity({ events }: { events: AgentEvent[] }) {
         return (
           <div
             key={`${event.toolCallId}-result-${index}`}
-            className="text-sm text-zinc-500"
+            className="flex items-center gap-2 text-sm text-neutral-500"
           >
-            <span className="mr-2">{event.success ? "✓" : "✗"}</span>
+            <span className={event.success ? "text-emerald-500" : "text-red-500"}>
+              {event.success ? "✓" : "✗"}
+            </span>
 
             {event.success
               ? `${formatToolName(event.tool)} completed`

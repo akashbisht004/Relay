@@ -1,75 +1,75 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { AgentEvent } from "../types/agent";
 import type { Conversation } from "../types/conversation";
 import type { ServerMessage } from "../types/websocket";
 
-export function useAgent(lastMessage: ServerMessage | null) {
-  
-  const [conversation, setConversation] = useState<Conversation | null>(null);
+type Subscribe = (handler: (message: ServerMessage) => void) => () => void;
 
+export function useAgent(subscribe: Subscribe) {
+  const [conversation, setConversation] = useState<Conversation | null>(null);
   const [agentEvents, setAgentEvents] = useState<AgentEvent[]>([]);
 
   useEffect(() => {
-    if (!lastMessage) return;
+    return subscribe((message) => {
+      switch (message.type) {
+        case "conversation":
+          setConversation(message.conversation);
+          break;
 
-    switch (lastMessage.type) {
-      case "conversation":
-        setConversation(lastMessage.conversation);
-        break;
-
-      case "agent_tool_start":
-        setAgentEvents((prev) => [
-          ...prev,
-          {
-            type: "tool_start",
-            tool: lastMessage.tool,
-            toolCallId: lastMessage.toolCallId,
-            args: lastMessage.args,
-          },
-        ]);
-        break;
-
-      case "agent_tool_result":
-        setAgentEvents((prev) => [
-          ...prev,
-          {
-            type: "tool_result",
-            tool: lastMessage.tool,
-            toolCallId: lastMessage.toolCallId,
-            success: lastMessage.success,
-            data: lastMessage.data,
-            error: lastMessage.error,
-          },
-        ]);
-        break;
-
-      case "agent_final":
-        setConversation((prev) => {
-          if (!prev) return prev;
-
-          return {
+        case "agent_tool_start":
+          setAgentEvents((prev) => [
             ...prev,
-            messages: [
-              ...prev.messages,
-              {
-                id: crypto.randomUUID(),
-                role: "assistant",
-                content: lastMessage.content,
-                createdAt: new Date(),
-              },
-            ],
-          };
-        });
+            {
+              type: "tool_start",
+              tool: message.tool,
+              toolCallId: message.toolCallId,
+              args: message.args,
+            },
+          ]);
+          break;
 
-        setAgentEvents([]);
-        break;
+        case "agent_tool_result":
+          setAgentEvents((prev) => [
+            ...prev,
+            {
+              type: "tool_result",
+              tool: message.tool,
+              toolCallId: message.toolCallId,
+              success: message.success,
+              data: message.data,
+              error: message.error,
+            },
+          ]);
+          break;
 
-      default:
-        break;
-    }
-  }, [lastMessage]);
+        case "agent_final":
+          setConversation((prev) => {
+            if (!prev) return prev;
 
-  const addUserMessage = (content: string) => {
+            return {
+              ...prev,
+              messages: [
+                ...prev.messages,
+                {
+                  id: crypto.randomUUID(),
+                  role: "assistant",
+                  content: message.content,
+                  createdAt: new Date().toISOString(),
+                },
+              ],
+            };
+          });
+
+          setAgentEvents([]);
+          break;
+
+        default:
+          break;
+      }
+    });
+  }, [subscribe]);
+
+  const addUserMessage = useCallback((content: string) => {
     setConversation((prev) => {
       if (!prev) return prev;
 
@@ -81,16 +81,16 @@ export function useAgent(lastMessage: ServerMessage | null) {
             id: crypto.randomUUID(),
             role: "user",
             content,
-            createdAt: new Date(),
+            createdAt: new Date().toISOString(),
           },
         ],
       };
     });
-  };
+  }, []);
 
-  const clearAgentEvents = () => {
+  const clearAgentEvents = useCallback(() => {
     setAgentEvents([]);
-  };
+  }, []);
 
   return {
     conversation,

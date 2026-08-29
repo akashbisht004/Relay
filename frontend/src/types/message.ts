@@ -8,5 +8,5 @@ export type Message = {
   id: string;
   role: MessageRole;
   content: string;
-  createdAt: Date;
+  createdAt: string;
 };
