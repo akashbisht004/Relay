@@ -54,6 +54,8 @@ async function startServer() {
                             await handleChatMessage(
                                 message.workspaceId,
                                 message.message,
+                                message.provider,
+                                message.model,
                                 (event) => {
                                     socket.send(JSON.stringify(event));
                                 }

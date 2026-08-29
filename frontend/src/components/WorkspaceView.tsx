@@ -4,17 +4,22 @@ import type { Conversation } from "../types/conversation";
 import type { Workspace } from "../types/workspace";
 import AgentActivity from "./AgentActivity";
 import ChatInput from "./ChatInput";
+import type { ModelSelection } from "../types/workspace";
 
 function WorkspaceView({
   selectedWorkspace,
   onSendMessage,
   conversation,
   agentEvents,
+  modelSelection,
+  setModelSelection,
 }: {
   selectedWorkspace: Workspace | null;
   onSendMessage: (message: string) => void;
   conversation: Conversation | null;
   agentEvents: AgentEvent[];
+  modelSelection: ModelSelection;
+  setModelSelection: React.Dispatch<React.SetStateAction<ModelSelection>>;
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -83,7 +88,11 @@ function WorkspaceView({
         )}
       </div>
 
-      <ChatInput onSend={onSendMessage} />
+      <ChatInput
+        onSend={onSendMessage}
+        modelSelection={modelSelection}
+        setModelSelection={setModelSelection}
+      />
     </div>
   );
 }

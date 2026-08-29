@@ -2,6 +2,7 @@ import { ConversationModel, WorkspaceModel } from "../db/model";
 import type { CreateWorkspace, Workspace, Message, Conversation } from "../types/workspace";
 import { runAgent } from "../agent/agent";
 import { ServerMessage } from "../types/websocket";
+import { ModelProvider } from "../agent/model/types";
 
 export async function createWorkspace(data: CreateWorkspace): Promise<Workspace> {
     const conversation = await ConversationModel.create({ messages: [] })
@@ -37,7 +38,7 @@ export async function getConversation(conversationId: string): Promise<Conversat
     return conversation;
 }
 
-export async function handleChatMessage(workspaceId: string, userMessage: string, send: (message: ServerMessage) => void) {
+export async function handleChatMessage(workspaceId: string, userMessage: string, provider: ModelProvider, model: string, send: (message: ServerMessage) => void) {
     const workspace = await WorkspaceModel.findById(workspaceId);
     if (!workspace) {
         throw new Error("Workspace not found");
@@ -57,6 +58,7 @@ export async function handleChatMessage(workspaceId: string, userMessage: string
     await conversation.save();
 
     await runAgent(userMessage, workspace.path,
+        provider, model,
         (event) => {
             if (event.type === "tool_start") {
                 send({

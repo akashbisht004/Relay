@@ -4,14 +4,11 @@ import { GoogleGenAI } from "@google/genai";
 
 import type { Decision } from "../types";
 import type { ToolDefinition } from "../tools/types";
-import type { ToolResult } from "../types";
-import type { Model } from "./types";
+import type { Model, ModelSession } from "./types";
 
 const ai = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY,
 });
-
-const contents: any[] = [];
 
 function toGeminiTools(tools: ToolDefinition[]) {
     return tools.map((tool) => ({
@@ -23,20 +20,20 @@ function toGeminiTools(tools: ToolDefinition[]) {
 
 async function callGemini(
     tools: ToolDefinition[],
+    model: string,
+    session: ModelSession
 ): Promise<Decision> {
 
     const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
-
-        contents,
-
+        model,
+        contents: session.history as any[],
         config: {
             systemInstruction: `
                 You are an AI coding agent.
                 You can inspect and modify software projects using the available tools.
                 Use tools whenever necessary to complete the user's task.
                 When the task is complete, provide a final response.
-                `,
+            `,
             tools: [
                 {
                     functionDeclarations: toGeminiTools(tools),
@@ -51,11 +48,12 @@ async function callGemini(
         throw new Error("Gemini returned no content");
     }
 
-    contents.push(modelContent);
+    session.history.push(modelContent);
 
     const functionCall = response.functionCalls?.[0];
 
     if (functionCall) {
+
         if (!functionCall.name) {
             throw new Error(
                 "Gemini returned a function call without a name"
@@ -79,11 +77,13 @@ async function callGemini(
 export const geminiModel: Model = {
 
     generate: async (
-        userPrompt: string,
-        tools: ToolDefinition[],
-    ): Promise<Decision> => {
+        userPrompt,
+        tools,
+        model,
+        session
+    ) => {
 
-        contents.push({
+        session.history.push({
             role: "user",
             parts: [
                 {
@@ -92,15 +92,17 @@ export const geminiModel: Model = {
             ],
         });
 
-        return callGemini(tools);
+        return callGemini(tools, model, session);
     },
 
     continue: async (
-        toolResult: ToolResult,
-        tools: ToolDefinition[],
-    ): Promise<Decision> => {
+        toolResult,
+        tools,
+        model,
+        session
+    ) => {
 
-        contents.push({
+        session.history.push({
             role: "user",
             parts: [
                 {
@@ -115,6 +117,6 @@ export const geminiModel: Model = {
             ],
         });
 
-        return callGemini(tools);
+        return callGemini(tools, model, session);
     },
 };

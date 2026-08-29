@@ -1,5 +1,6 @@
 import type { CreateWorkspace, Workspace } from "./workspace";
 import type { Conversation } from "./conversation";
+import type { ModelProvider } from "./agent";
 
 export type ClientMessage =
   | {
@@ -13,6 +14,8 @@ export type ClientMessage =
     type: "chat_message";
     workspaceId: string;
     message: string;
+    provider: ModelProvider;
+    model: string;
   }
   | {
     type: "get_conversation";

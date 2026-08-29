@@ -1,11 +1,20 @@
 import { useAgent } from "./hooks/useAgent";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useWorkspace } from "./hooks/useWorkspace";
+import { useState } from "react";
 
+import type { ModelSelection } from "./types/workspace";
 import WorkspaceSidebar from "./components/WorkspaceSidebar";
 import WorkspaceView from "./components/WorkspaceView";
+import type { ModelProvider } from "./types/agent";
 
 function App() {
+ 
+  const [modelSelection, setModelSelection] = useState<ModelSelection>({
+    provider: "gemini",
+    model: "gemini-3.6-flash",
+  });
+
   const { status, sendMessage, subscribe } = useWebSocket();
 
   const {
@@ -23,7 +32,9 @@ function App() {
     setConversation,
   });
 
-  const handleSendMessage = (message: string) => {
+  const handleSendMessage = (
+    message: string
+  ) => {
     if (!selectedWorkspace) return;
 
     addUserMessage(message);
@@ -33,6 +44,8 @@ function App() {
       type: "chat_message",
       workspaceId: selectedWorkspace.id,
       message,
+      provider: modelSelection.provider,
+      model: modelSelection.model,
     });
   };
 
@@ -68,6 +81,8 @@ function App() {
           conversation={conversation}
           onSendMessage={handleSendMessage}
           agentEvents={agentEvents}
+          modelSelection={modelSelection}
+          setModelSelection={setModelSelection}
         />
       </main>
     </div>

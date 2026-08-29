@@ -1,3 +1,4 @@
+import { ModelProvider } from "../agent/model/types";
 import type { Conversation, CreateWorkspace, Workspace } from "./workspace";
 
 export type ClientMessage =
@@ -13,6 +14,8 @@ export type ClientMessage =
     workspaceId: string;
     conversationId: string;
     message: string;
+    provider: ModelProvider;
+    model: string;
   }
   | {
     type: "get_conversation";

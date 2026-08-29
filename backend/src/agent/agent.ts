@@ -2,23 +2,35 @@ import "dotenv/config";
 
 import tools from "./tools";
 import { getToolDefinitions } from "./tools";
-import { geminiModel } from "./model/gemini";
-import { AgentEvent } from "./types";
+import type { AgentEvent } from "./types";
+import type { ModelSession, ModelProvider } from "./model/types";
+import { models } from "./model/index";
+
 
 export async function runAgent(
     userPrompt: string,
     workspacePath: string,
-    onEvent?: (event: AgentEvent) => void
+    provider: ModelProvider,
+    model: string,
+    onEvent?: (event: AgentEvent) => void,
 ): Promise<void> {
 
     const toolDefinitions = getToolDefinitions();
-    let decision = await geminiModel.generate(userPrompt, toolDefinitions);
+    const session: ModelSession = {
+        history: []
+    }
+
+    const sdk = models[provider];
+    if (!sdk) {
+        throw new Error(`Unsupported model provider: ${provider}`);
+    }
+
+    let decision = await sdk.generate(userPrompt, toolDefinitions, model, session);
 
     while (true) {
-
         if (decision.type === "tool_call") {
-
             const tool = tools.get(decision.tool);
+
             if (!tool) {
                 throw new Error(`Tool "${decision.tool}" not found`);
             }
@@ -43,9 +55,11 @@ export async function runAgent(
                 result,
             });
 
-            decision = await geminiModel.continue(
+            decision = await sdk.continue(
                 result,
-                toolDefinitions
+                toolDefinitions,
+                model,
+                session
             );
             continue;
         }

@@ -11,3 +11,7 @@ export type CreateWorkspace={
   path: string;
 };
 
+export type ModelSelection = {
+    provider: "gemini" | "claude" | "openai";
+    model: string;
+  };
