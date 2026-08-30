@@ -8,12 +8,14 @@ type Subscribe = (handler: (message: ServerMessage) => void) => () => void;
 export function useAgent(subscribe: Subscribe) {
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [agentEvents, setAgentEvents] = useState<AgentEvent[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     return subscribe((message) => {
       switch (message.type) {
         case "conversation":
           setConversation(message.conversation);
+          setIsProcessing(false);
           break;
 
         case "agent_tool_start":
@@ -61,6 +63,11 @@ export function useAgent(subscribe: Subscribe) {
           });
 
           setAgentEvents([]);
+          setIsProcessing(false);
+          break;
+
+        case "error":
+          setIsProcessing(false);
           break;
 
         default:
@@ -70,6 +77,7 @@ export function useAgent(subscribe: Subscribe) {
   }, [subscribe]);
 
   const addUserMessage = useCallback((content: string) => {
+    setIsProcessing(true);
     setConversation((prev) => {
       if (!prev) return prev;
 
@@ -96,6 +104,7 @@ export function useAgent(subscribe: Subscribe) {
     conversation,
     setConversation,
     agentEvents,
+    isProcessing,
     addUserMessage,
     clearAgentEvents,
   };

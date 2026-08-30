@@ -10,6 +10,10 @@ body,
   height: 100%;
 }
 
+button {
+  cursor: pointer;
+}
+
 body {
   margin: 0;
   background-color: #0a0a0a;
@@ -39,3 +43,63 @@ body {
 *::-webkit-scrollbar-track {
   background: transparent;
 }
+
+/* Let the CodeBlock wrapper own the padding/background so highlighted and
+   plain code blocks look identical; keep highlight.js token colors. */
+.hljs {
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+/* Agent "thinking" indicator */
+@keyframes af-thinking {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+.af-thinking-dot {
+  animation: af-thinking 1.2s infinite ease-in-out;
+}
+
+@keyframes af-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.af-shimmer {
+  background: linear-gradient(
+    90deg,
+    #6b7280 0%,
+    #d4d4d4 20%,
+    #6b7280 40%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: af-shimmer 2s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .af-thinking-dot,
+  .af-shimmer,
+  .animate-spin,
+  .animate-pulse {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+
