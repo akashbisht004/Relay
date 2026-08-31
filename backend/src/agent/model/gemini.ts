@@ -5,6 +5,7 @@ import { GoogleGenAI } from "@google/genai";
 import type { Decision } from "../types";
 import type { ToolDefinition } from "../tools/types";
 import type { Model, ModelSession } from "./types";
+import { systemPrompt } from "../systemPrompt";
 
 const ai = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY,
@@ -28,12 +29,7 @@ async function callGemini(
         model,
         contents: session.history as any[],
         config: {
-            systemInstruction: `
-                You are an AI coding agent.
-                You can inspect and modify software projects using the available tools.
-                Use tools whenever necessary to complete the user's task.
-                When the task is complete, provide a final response.
-            `,
+            systemInstruction: systemPrompt,
             tools: [
                 {
                     functionDeclarations: toGeminiTools(tools),

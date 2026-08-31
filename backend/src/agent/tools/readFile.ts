@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import type { Tool } from "./types";
 import { ToolResult } from "../types";
-import { resolveWorkspacePath } from "../workspace";
+import { resolveWorkspacePath } from "../utility";
 
 export const readFileTool: Tool = {
 

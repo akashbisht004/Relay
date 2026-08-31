@@ -14,6 +14,7 @@ function WorkspaceView({
   onSendMessage,
   conversation,
   agentEvents,
+  agentError,
   isProcessing,
   modelSelection,
   setModelSelection,
@@ -22,6 +23,7 @@ function WorkspaceView({
   onSendMessage: (message: string) => void;
   conversation: Conversation | null;
   agentEvents: AgentEvent[];
+  agentError: string | null;
   isProcessing: boolean;
   modelSelection: ModelSelection;
   setModelSelection: React.Dispatch<React.SetStateAction<ModelSelection>>;
@@ -30,7 +32,7 @@ function WorkspaceView({
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [conversation?.messages.length, agentEvents.length, isProcessing]);
+  }, [conversation?.messages.length, agentEvents.length, isProcessing, agentError]);
 
   const hasMessages = conversation && conversation.messages.length > 0;
   const showActivity = isProcessing || agentEvents.length > 0;
@@ -55,7 +57,7 @@ function WorkspaceView({
             title="No workspace selected"
             hint="Pick a workspace from the sidebar to get started."
           />
-        ) : !hasMessages && !showActivity ? (
+        ) : !hasMessages && !showActivity && !agentError ? (
           <EmptyState
             title="Start a conversation"
             hint="Ask the agent to explore, edit, or build something in this workspace."
@@ -71,6 +73,20 @@ function WorkspaceView({
                 <Logo className="mt-0.5 h-7 w-7" />
                 <div className="min-w-0 flex-1 rounded-2xl rounded-tl-sm border border-neutral-800 bg-neutral-900 px-4 py-3">
                   <AgentActivity events={agentEvents} isProcessing={isProcessing} />
+                </div>
+              </div>
+            )}
+
+            {agentError && (
+              <div className="flex justify-start gap-3">
+                <Logo className="mt-0.5 h-7 w-7" />
+                <div className="min-w-0 flex-1 rounded-2xl rounded-tl-sm border border-red-900/60 bg-red-950/40 px-4 py-3">
+                  <p className="text-xs font-medium text-red-400">
+                    Something went wrong
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-red-200">
+                    {agentError}
+                  </p>
                 </div>
               </div>
             )}

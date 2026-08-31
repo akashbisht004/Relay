@@ -92,9 +92,9 @@ async function startServer() {
                 console.log("Client disconnected");
             });
         });
+        
     } catch (error) {
         console.error(error);
-        process.exit(1);
     }
 }
 

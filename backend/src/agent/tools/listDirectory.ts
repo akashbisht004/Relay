@@ -1,7 +1,7 @@
 import { readdir } from "node:fs/promises";
 
 import type { Tool } from "./types";
-import { resolveWorkspacePath } from "../workspace";
+import { resolveWorkspacePath } from "../utility";
 import type { ToolResult } from "../types";
 
 export const listDirectoryTool: Tool = {

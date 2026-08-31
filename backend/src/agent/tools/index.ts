@@ -2,10 +2,10 @@ import { editFileTool } from "./editFile";
 import { listDirectoryTool } from "./listDirectory";
 import { readFileTool } from "./readFile";
 import { searchFilesTool } from "./serachFiles";
-import type { Tool, ToolDefinition } from "./types";
+import type { ToolDefinition } from "./types";
 import { writeFileTool } from "./writeFile";
 
-export const tools = new Map([
+const tools = new Map([
     [readFileTool.name, readFileTool],
     [writeFileTool.name, writeFileTool],
     [editFileTool.name, editFileTool],

@@ -58,4 +58,8 @@ export type AgentEvent =
     | {
         type: "final";
         content: string;
+    }
+    | {
+        type: "error";
+        message: string;
     };

@@ -6,7 +6,7 @@ import {
 import path from "node:path";
 
 import type { Tool } from "./types";
-import { resolveWorkspacePath } from "../workspace";
+import { resolveWorkspacePath } from "../utility";
 import type { ToolResult } from "../types";
 
 async function searchDirectory(

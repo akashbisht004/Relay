@@ -9,6 +9,7 @@ export function useAgent(subscribe: Subscribe) {
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [agentEvents, setAgentEvents] = useState<AgentEvent[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [agentError, setAgentError] = useState<string | null>(null);
 
   useEffect(() => {
     return subscribe((message) => {
@@ -67,6 +68,8 @@ export function useAgent(subscribe: Subscribe) {
           break;
 
         case "error":
+          setAgentEvents([]);
+          setAgentError(message.message);
           setIsProcessing(false);
           break;
 
@@ -98,12 +101,14 @@ export function useAgent(subscribe: Subscribe) {
 
   const clearAgentEvents = useCallback(() => {
     setAgentEvents([]);
+    setAgentError(null);
   }, []);
 
   return {
     conversation,
     setConversation,
     agentEvents,
+    agentError,
     isProcessing,
     addUserMessage,
     clearAgentEvents,

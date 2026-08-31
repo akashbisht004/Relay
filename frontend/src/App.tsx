@@ -22,6 +22,7 @@ function App() {
     conversation,
     setConversation,
     agentEvents,
+    agentError,
     isProcessing,
     addUserMessage,
     clearAgentEvents,
@@ -105,6 +106,7 @@ function App() {
           conversation={conversation}
           onSendMessage={handleSendMessage}
           agentEvents={agentEvents}
+          agentError={agentError}
           isProcessing={isProcessing}
           modelSelection={modelSelection}
           setModelSelection={setModelSelection}

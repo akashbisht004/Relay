@@ -94,7 +94,16 @@ export async function handleChatMessage(workspaceId: string, userMessage: string
                 });
                 return;
             }
+
+            if (event.type === "error") {
+                send({
+                    type: "error",
+                    message: event.message,
+                });
+                return;
+            }
         }
     );
+    
     await conversation.save();
 }
