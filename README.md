@@ -4,18 +4,6 @@
 
 It is provider-agnostic: the same agent loop runs against **Google Gemini**, **Anthropic Claude**, or **OpenAI**, selectable per message.
 
-```
-┌─────────────────┐        JSON over WebSocket        ┌─────────────────┐
-│   Web client    │  ───────────────────────────────▶ │     Backend     │
-│  (React, Vite)  │  ◀─────────────────────────────── │ (Node, ws, TS)  │
-└─────────────────┘   tool events + final response     └────────┬────────┘
-                                                                 │
-                                        ┌────────────────────────┼────────────────────────┐
-                                        ▼                        ▼                        ▼
-                                  Model provider           MongoDB store          Workspace files
-                                 (Gemini/Claude/OpenAI)   (workspaces, chats)     (read / write / edit)
-```
-
 ---
 
 ## What it does
