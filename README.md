@@ -4,6 +4,12 @@
 
 It is provider-agnostic: the same agent loop runs against **Google Gemini**, **Anthropic Claude**, or **OpenAI**, selectable per message.
 
+
+<img width="1839" height="946" alt="Screenshot from 2026-09-24 06-32-48" src="https://github.com/user-attachments/assets/66044912-b416-413d-8712-445b47f1f4c3" />
+
+<img width="1839" height="946" alt="Screenshot from 2026-09-24 06-34-59" src="https://github.com/user-attachments/assets/2366fb53-5eab-4930-9836-dba24df8f8ef" />
+
+
 ---
 
 ## What it does
